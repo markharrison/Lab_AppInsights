@@ -1,6 +1,6 @@
 # Application Insights - Hands-on Lab Script - part 6
 
-Mark Harrison : 6 Aug 2018
+Mark Harrison : needs updating - original 6 Aug 2018
 
 ![](Images/AppInsights.png)
 

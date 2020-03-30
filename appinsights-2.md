@@ -1,6 +1,6 @@
 # Application Insights - Hands-on Lab Script - part 2
 
-Mark Harrison : 6 Aug 2018
+Mark Harrison : checked & updated 31 March 2020 - original 6 Aug 2018
 
 ![](Images/AppInsights.png)
 
@@ -15,87 +15,111 @@ Mark Harrison : 6 Aug 2018
 
 ### Create a .NET Core Web Application
 
-- Use Visual Studio 2017 to create the application
+- Use Visual Studio 2019 to create a .NET Core Web Application
 
-![](Images/AppIns201.png)
+![](Images/AppIns2VSProject1.png)
 
-![](Images/AppIns202.png)
+![](Images/AppIns2VSProject2.png)
 
-![](Images/AppIns203.png)
+![](Images/AppIns2VSproject3.png)
 
 ### Enable AppInsights
 
 - Right click on project and select `Add` | `Application Insights Telemetry`
 
-![](Images/AppIns204.png)
+![](Images/AppIns2VSAddAI.png)
 
 - There maybe a warning to update SDK - if so then accept
 - Click `Get Started`  
 
-![](Images/AppIns205.png)
+![](Images/AppIns2VSAddAI2.png)
 
 - Select the AppInsights instance we created earlier
 
-![](Images/AppIns206.png)
+![](Images/AppIns2VSAddAI3.png)
 
-![](Images/AppIns207.png)
+![](Images/APPins2VSAddAI4.png)
 
-![](Images/AppIns208.png)
+![](Images/APPins2VSAddAI5.png)
 
 This process will insert some code into the WebApp to connect the app to the AppInsights instance and send the telemetry that is generated.
+
+![](Images/APPins2VSAddAI6.png)
 
 Also notice that the AppInsights IntrumentationKey has been added to the appsettings.json configuration file.
 
 In real world development, different instrumentation keys should be used for dev / staging / production etc. to keep the telemetry separate across the different stages.  This can be done by setting the key in code from an environment variable.
 
+- Amend the Key to match that used by the App Insights instance we created in part 1
+
+![](Images/AppIns2Key.png)
+
 ```json
 {
   "ApplicationInsights": {
-    "InstrumentationKey": "2a676bbb-b8b4-43df-8ee3-16c1c5d8d635"
+    "InstrumentationKey": "007373e3-a964-48b3-a104-7d4e4f1d474f"
   }
 }
 ```
 
-![](Images/AppIns209.png)
-
 Make sure the ApplicationInsights Nuget package is greater than 2.2.0 - upgrade if neccessary
 
-![](Images/AppIns210.png)
+![](Images/AppIns2Nuget1.png)
+
+![](Images/AppIns2Nuget2.png)
+
+Updated
+
+![](Images/AppIns2Nuget3.png)
 
 ### Client Monitoring
 
-A JavaScript snippet must be added to the web page - this is used to analyze usage patterns and to detect and diagnose client side performance issues and failures.
+The preceding steps are enough to start collecting server-side telemetry. Next we will enable collecting client usage telemetry - a JavaScript snippet must be added to our web pages.
 
-- Select the `Getting Started` menu option
+In _ViewImports.cshtml, add injection:
 
-![](Images/AppIns211.png)
+```c#
+@inject Microsoft.ApplicationInsights.AspNetCore.JavaScriptSnippet JavaScriptSnippet
+```
 
-- Get the Snippet and add it to the _Layout.cshtml page in the WebApp.  This will insert the Javascript into every HTML page response, that uses this layout.
+In _Layout.cshtml, insert HtmlHelper at the end of the `<head>` section but before any other script. If you want to report any custom JavaScript telemetry from the page, inject it after this snippet:
 
-![](Images/AppIns212.png)
+```c#
+    @Html.Raw(JavaScriptSnippet.FullScript)
+    </head>
+```
 
-Note:  With .NET Core this Snippet appears to be automatically inserted, and so the above step is not required.
+![](Images/AppIns2ClientMonitoring.png)
+
+When we run the application, and examine the source code - we can see the client monitoring javascript
+
+![](Images/AppIns2ClientJS.png)
 
 ### Bad code
 
 Add a new web page with some logic to the app to cause an exception - we will use this later.
 
-The required code is documented at `Getting Started` menu option.
+![](Images/AppIns2BadCode1.png)
 
-![](Images/AppIns213.png)
+![](Images/AppIns2BadCode2.png)
 
-Below is example - the code will send the telemetry on an exception to App Insights.  
+![](Images/AppIns2BadCode3.png)
 
-![](Images/AppIns214.png)
+![](Images/AppIns2BadCode4.png)
 
-![](Images/AppIns215.png)
+Add the following code to send the telemetry on an exception to App Insights.  
+
+Crash.cshtml
 
 ```c#
 @page
 @using Microsoft.ApplicationInsights
+@model markharrisonweb.Pages.CrashModel
 @{
-    Layout = null;
+    ViewData["Title"] = "Crash";
+
     string strError = "error";
+
     try
     {
         int x = 100;
@@ -104,42 +128,60 @@ Below is example - the code will send the telemetry on an exception to App Insig
     catch (Exception ex)
     {
         // Report the exception to Application Insights.
-        TelemetryClient _telemetryClient = new TelemetryClient();
-        _telemetryClient.TrackException(ex);
+        Model.telemetryClient.TrackException(ex);
 
         strError = ex.ToString();
     }
 }
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title>crash</title>
-</head>
-<body>
-    <h1>Crash</h1>
-    @Html.Raw(strError)
-</body>
-</html>
+<h1>Crash</h1>
+@Html.Raw(strError)
 ```
+
+![](Images/AppIns2BadCode5.png)
+
+Also add the following code to the code-behind file
+
+Crash.cshtml.cs
+
+```c#
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.ApplicationInsights;
+
+namespace markharrisonweb.Pages
+{
+    public class CrashModel : PageModel
+    {
+        public TelemetryClient telemetryClient;
+        public CrashModel(TelemetryClient telemetry)
+        {
+            this.telemetryClient = telemetry;
+        }
+
+        public void OnGet()
+        {
+
+        }
+    }
+}
+```
+
+![](Images/AppIns2BadCode6.png)
 
 ### Call backend service
 
-Add a new web page with some logic to call some backend API or database - we will use this later
+Next, add a new web page with some logic to call some backend API or database - we will use this later.
 
 Below is example of how this could be done.
-
-![](Images/AppIns216.png)
 
 ```c#
 @page
 @using System.Text;
 @using System.Net;
 @using System.IO;
+@model markharrisonweb.Pages.RSSFeedModel
 @{
-    ViewData["Title"] = "RSS";
-    Layout = "~/Pages/_Layout.cshtml";
+    ViewData["Title"] = "RSSFeed";
 
     string RSSFeedURL = "https://feeds.feedburner.com/azure1news";
     int bufSize = 65536;
@@ -152,15 +194,18 @@ Below is example of how this could be done.
     Stream responseStream = response.GetResponseStream();
 
     // Read response stream until end
-    while ((length = responseStream.Read(buf, 0, buf.Length)) != 0){
+    while ((length = responseStream.Read(buf, 0, buf.Length)) != 0)
+    {
         sb.Append(Encoding.UTF8.GetString(buf, 0, length));
-        }
+    }
 }
 
-<h1>RSS</h1>
+<h1>RSSFeed</h1>
 
 @Html.Raw(sb.ToString())
 ```
+
+![](Images/AppIns2RSSFeed.png)
 
 ### Snapshot Debugging
 
@@ -168,58 +213,23 @@ Optional step needed for Snapshot Debugging
 
 Add SnapshotCollector Nuget package
 
-![](Images/AppIns217.png)
+![](Images/AppIns2SnapshotNuget.png)
 
 Add the following code to startup.cs
 
 ```c#
 using Microsoft.ApplicationInsights.SnapshotCollector;
-using Microsoft.Extensions.Options;
-using Microsoft.ApplicationInsights.AspNetCore;
-using Microsoft.ApplicationInsights.Extensibility;
 ```
 
-Add the following code to `class Startup` in startup.cs
+AAdd the following at the end of the ConfigureServices method in the Startup class in Startup.cs.
 
 ```c#
-    public class Startup
-    {
-
-        private class SnapshotCollectorTelemetryProcessorFactory : ITelemetryProcessorFactory
-        {
-            private readonly IServiceProvider _serviceProvider;
-
-            public SnapshotCollectorTelemetryProcessorFactory(IServiceProvider serviceProvider) =>
-                _serviceProvider = serviceProvider;
-
-            public ITelemetryProcessor Create(ITelemetryProcessor next)
-            {
-                var snapshotConfigurationOptions = _serviceProvider.GetService<IOptions<SnapshotCollectorConfiguration>>();
-                return new SnapshotCollectorTelemetryProcessor(next, configuration: snapshotConfigurationOptions.Value);
-            }
-        }
+    services.AddSnapshotCollector((configuration) =>
+        Configuration.Bind(nameof(SnapshotCollectorConfiguration), configuration));
 
 ```
 
-Add the following code to `IConfiguration Configuration` in startup.cs
-
-```c#
-        public IConfiguration Configuration { get; }
-
-        public void ConfigureServices(IServiceCollection services)
-        {
-            // Configure SnapshotCollector from application settings
-            services.Configure<SnapshotCollectorConfiguration>(Configuration.GetSection(nameof(SnapshotCollectorConfiguration)));
-
-            // Add SnapshotCollector telemetry processor.
-            services.AddSingleton<ITelemetryProcessorFactory>(sp => new SnapshotCollectorTelemetryProcessorFactory(sp));
-
-            services.AddMvc();
-        }
-
-```
-
-Add the following settings to the appsettings.json file 
+Add the following settings to the appsettings.json file
 
 ```json
 {
@@ -243,64 +253,96 @@ Add the following settings to the appsettings.json file
 
 ```
 
+![](Images/AppIns2SnapshotCollector.png)
+
 ### Custom Events
 
 We can instrument application code by augmenting the captured telemetry with custom events and custom metrics (continuous measurement).
 
 This could also be used for behaviour monitoring, and identify what users do you your site.
 
-The required code is documented at `Getting Started` menu option.
-
-![](Images/AppIns218.png)
-
 Below is example of how this could be done.
 
 The Web page will generate a random color and send the result to the AppInsights telemetry.
 
-![](Images/AppIns219.png)
+Color.cshtml
 
 ```c#
 @page
 @using Microsoft.ApplicationInsights
+@model markharrisonweb.Pages.ColorModel
 @{
     ViewData["Title"] = "Color";
-    Layout = "~/Pages/_Layout.cshtml";
 
     string[] strColors = { "red", "blue", "yellow", "green" };
     Random r = new Random();
     int rInt = r.Next(strColors.Length);
     string strRandColor = strColors[rInt];
 
-    var tc = new TelemetryClient();
-    var properties = new Dictionary<string, string> { { "Color", strRandColor} };
-    tc.TrackEvent("ColorEvent", properties, null);
+    var properties = new Dictionary<string, string> { { "Color", strRandColor } };
+    Model.telemetryClient.TrackEvent("ColorEvent", properties, null);
 }
 
-<h2>Color</h2>
-
+<h1>Color</h1>
 <svg height="200" width="200">
     <circle cx="100" cy="100" r="95" stroke="black" stroke-width="3" fill="@Html.Raw(strRandColor)" />
 </svg>
 ```
 
-![](Images/AppIns220.png)
+![](Images/AppIns2Color1.png)
+
+Also add the following code to the code-behind file
+
+Color.cshtml.cs
+
+```c#
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.ApplicationInsights;
+
+namespace markharrisonweb.Pages
+{
+    public class ColorModel : PageModel
+    {
+        public TelemetryClient telemetryClient;
+        public ColorModel(TelemetryClient telemetry)
+        {
+            this.telemetryClient = telemetry;
+        }
+
+        public void OnGet()
+        {
+
+        }
+    }
+}
+```
+
+![](Images/AppIns2Color2.png)
 
 ### Deploy Application
+
+Our application is now complete - lets deploy it.
 
 - Publish application to Azure
   - Select the WebApp resource created earlier
 
-![](Images/AppIns221.png)
+  ![](Images/AppIns2Deploy1.png)
 
-![](Images/AppIns222.png)
+  ![](Images/AppIns2Deploy2.png)
 
-![](Images/AppIns223.png)
+  ![](Images/AppIns2Deploy3.png)
 
-![](Images/AppIns224.png)
+  ![](Images/AppIns2Deploy4.png)
+
+  ![](Images/AppIns2Deploy5.png)
+
+  ![](Images/AppIns2Deploy6.png)
 
 - Once published, we can access our web application
 
-![](Images/AppIns225.png)
+  ![](Images/AppIns2Deploy7.png)
+
+  ![](Images/AppIns2Deploy8.png)
 
 ### Test web site  
 
@@ -309,7 +351,7 @@ Put the website under a load.  The following PowerShell may be useful, amend to 
 ```PowerShell
 for ($i = 0 ; $i -lt 100; $i++)
 {
- Invoke-WebRequest -uri http://markharrisonapp.azurewebsites.net/
+ Invoke-WebRequest -uri https://markharrisonapp.azurewebsites.net/
 }
 ```
 
@@ -319,7 +361,7 @@ Check the AppInsights overview page.
 
 Note the response times, server requests, failed requests.
 
-![](Images/AppIns226.png)
+![](Images/AppIns2AIBlade.png)
 
 ---
 [Home](appinsights-0.md) | [Prev](appinsights-1.md) | [Next](appinsights-3.md)

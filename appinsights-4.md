@@ -1,6 +1,6 @@
 # Application Insights - Hands-on Lab Script - part 4
 
-Mark Harrison : 6 Aug 2018
+Mark Harrison : checked & updated 31 March 2020 - original 6 Aug 2018
 
 ![](Images/AppInsights.png)
 
@@ -17,11 +17,11 @@ Mark Harrison : 6 Aug 2018
 
 Analytics is the powerful search and query tool of Application Insights.  It is a webtool accessed from the AppInsights overview blade.
 
-![](Images/AppIns401.png)
+![](Images/AppIns4Analytics1.png)
 
-![](Images/AppIns402.png)
+![](Images/AppIns4Analytics2.png)
 
-![](Images/AppIns403.png)
+![](Images/AppIns4Analytics3.png)
 
 ### Query data in Analytics
 
@@ -41,20 +41,20 @@ requests
  | render piechart
 ```
 
-![](Images/AppIns404.png)
+![](Images/AppIns4Query1.png)
 
 ### Performance
 
-Example: What are the 50th, 90th, and 95th percentiles of request duration in the past 24 hours?
+Example: What are the 50th, 90th, and 95th percentiles of request duration in the past 4 hours?
 
 ```text
 requests
- | where timestamp >= ago(24h)
+ | where timestamp >= ago(4h)
  | summarize percentiles(duration, 50, 90, 95) by bin(timestamp, 1h)
  | render timechart
 ```
 
-![](Images/AppIns405.png)
+![](Images/AppIns4Query2.png)
 
 ### CustomEvents
 
@@ -68,13 +68,13 @@ customEvents
  | render piechart
 ```
 
-![](Images/AppIns406.png)
+![](Images/AppIns4Query3.png)
 
 ### More information and tutorials about the query langauge
 
-<https://docs.loganalytics.io/docs/Learn/Getting-Started/>
+<https://docs.microsoft.com/en-us/azure/azure-monitor/log-query/get-started-portal>
 
-<https://docs.loganalytics.io/docs/Learn/Tutorials/>
+<https://docs.microsoft.com/en-us/azure/azure-monitor/log-query/get-started-queries>
 
 ### API access / Logic Apps
 
@@ -82,15 +82,17 @@ The queries can be accessed remotely by means of an API.
 
 A key needs to be generated to access the API
 
-![](Images/AppIns407.png)
+ ![](Images/AppIns4API1.png)
+
+ ![](Images/AppIns4API2.png)
 
 An example of using the API is the Logic Apps connector for App Insights.  For example we can peridocially generate an email showing exceptions in our application.
 
-![](Images/AppIns408.png)
+![](Images/AppIns4LA1.png)
 
-![](Images/AppIns409.png)
+![](Images/AppIns4LA2.png)
 
-![](Images/AppIns410.png)
+![](Images/AppIns4LA3.png)
 
 ---
 [Home](appinsights-0.md) | [Next](appinsights-3.md)  | [Next](appinsights-5.md)
