@@ -11,5 +11,7 @@ Mark Harrison : checked & updated 31 March 2020 - original 6 Aug 2018
 - [Part 5 - Availability Monitoring](appinsights-5.md)
 - [Part 6 - Usage Behaviour Analysis](appinsights-6.md)
 
+Demo App at: <https://github.com/markharrison/Lab_AppInsights_DemoApp>
+
 ---
 <http://github.markharrison.io>
